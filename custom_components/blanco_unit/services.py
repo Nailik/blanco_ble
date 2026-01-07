@@ -9,30 +9,29 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
-from .const import CONF_PIN, DOMAIN
+from .const import (
+    CONF_PIN,
+    DOMAIN,
+    HA_SERVICE_ATTR_AMOUNT_ML,
+    HA_SERVICE_ATTR_CO2_INTENSITY,
+    HA_SERVICE_ATTR_DEVICE_ID,
+    HA_SERVICE_ATTR_NEW_PIN,
+    HA_SERVICE_ATTR_UPDATE_CONFIG,
+    HA_SERVICE_CHANGE_PIN,
+    HA_SERVICE_DISPENSE_WATER,
+)
 from .coordinator import BlancoUnitCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# Service names
-SERVICE_DISPENSE_WATER = "dispense_water"
-SERVICE_CHANGE_PIN = "change_pin"
-
-# Service parameters
-ATTR_DEVICE_ID = "device_id"
-ATTR_AMOUNT_ML = "amount_ml"
-ATTR_CO2_INTENSITY = "co2_intensity"
-ATTR_NEW_PIN = "new_pin"
-ATTR_UPDATE_CONFIG = "update_config"
-
 # Service schemas
 SERVICE_DISPENSE_WATER_SCHEMA = vol.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): cv.string,
-        vol.Required(ATTR_AMOUNT_ML): vol.All(
+        vol.Required(HA_SERVICE_ATTR_DEVICE_ID): cv.string,
+        vol.Required(HA_SERVICE_ATTR_AMOUNT_ML): vol.All(
             vol.Coerce(int), vol.Range(min=100, max=1500), vol.Multiple(100)
         ),
-        vol.Required(ATTR_CO2_INTENSITY): vol.All(
+        vol.Required(HA_SERVICE_ATTR_CO2_INTENSITY): vol.All(
             vol.Coerce(int), vol.In([1, 2, 3])
         ),
     }
@@ -40,13 +39,13 @@ SERVICE_DISPENSE_WATER_SCHEMA = vol.Schema(
 
 SERVICE_CHANGE_PIN_SCHEMA = vol.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): cv.string,
-        vol.Required(ATTR_NEW_PIN): vol.All(
+        vol.Required(HA_SERVICE_ATTR_DEVICE_ID): cv.string,
+        vol.Required(HA_SERVICE_ATTR_NEW_PIN): vol.All(
             cv.string,
             vol.Length(min=5, max=5),
             vol.Match(r"^\d{5}$"),
         ),
-        vol.Optional(ATTR_UPDATE_CONFIG, default=False): cv.boolean,
+        vol.Optional(HA_SERVICE_ATTR_UPDATE_CONFIG, default=False): cv.boolean,
     }
 )
 
@@ -56,7 +55,7 @@ def async_setup_services(hass: HomeAssistant):
     _LOGGER.debug("async_setup_services called")
 
     # Only register services once
-    if hass.services.has_service(DOMAIN, SERVICE_DISPENSE_WATER):
+    if hass.services.has_service(DOMAIN, HA_SERVICE_DISPENSE_WATER):
         _LOGGER.debug("Services already registered, skipping")
         return
 
@@ -64,8 +63,8 @@ def async_setup_services(hass: HomeAssistant):
         """Handle the dispense_water service call."""
         _LOGGER.debug("Dispense water service called with data: %s", call.data)
         coordinator = _get_coordinator(hass, call)
-        amount_ml = call.data[ATTR_AMOUNT_ML]
-        co2_intensity = call.data[ATTR_CO2_INTENSITY]
+        amount_ml = call.data[HA_SERVICE_ATTR_AMOUNT_ML]
+        co2_intensity = call.data[HA_SERVICE_ATTR_CO2_INTENSITY]
 
         await coordinator.dispense_water(amount_ml, co2_intensity)
 
@@ -73,15 +72,15 @@ def async_setup_services(hass: HomeAssistant):
         """Handle the change_pin service call."""
         _LOGGER.debug("Change PIN service called with data: %s", call.data)
         coordinator = _get_coordinator(hass, call)
-        new_pin = call.data[ATTR_NEW_PIN]
-        update_config = call.data[ATTR_UPDATE_CONFIG]
+        new_pin = call.data[HA_SERVICE_ATTR_NEW_PIN]
+        update_config = call.data[HA_SERVICE_ATTR_UPDATE_CONFIG]
 
         # Change the PIN on the device
         await coordinator.change_pin(new_pin)
 
         # If update_config is True, update the config entry with the new PIN
         if update_config:
-            device_id = call.data[ATTR_DEVICE_ID]
+            device_id = call.data[HA_SERVICE_ATTR_DEVICE_ID]
             registry = dr.async_get(hass)
             device = registry.async_get(device_id)
             if device:
@@ -99,14 +98,14 @@ def async_setup_services(hass: HomeAssistant):
 
     hass.services.async_register(
         DOMAIN,
-        SERVICE_DISPENSE_WATER,
+        HA_SERVICE_DISPENSE_WATER,
         handle_dispense_water,
         schema=SERVICE_DISPENSE_WATER_SCHEMA,
     )
 
     hass.services.async_register(
         DOMAIN,
-        SERVICE_CHANGE_PIN,
+        HA_SERVICE_CHANGE_PIN,
         handle_change_pin,
         schema=SERVICE_CHANGE_PIN_SCHEMA,
     )
@@ -114,7 +113,7 @@ def async_setup_services(hass: HomeAssistant):
 
 def _get_coordinator(hass: HomeAssistant, call: ServiceCall) -> BlancoUnitCoordinator:
     """Extract device_id from service call and return the coordinator."""
-    device_id = call.data.get(ATTR_DEVICE_ID)
+    device_id = call.data.get(HA_SERVICE_ATTR_DEVICE_ID)
     if not device_id:
         raise ServiceValidationError(
             translation_domain=DOMAIN,

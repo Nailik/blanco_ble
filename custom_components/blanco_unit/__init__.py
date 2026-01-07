@@ -34,7 +34,6 @@ PLATFORMS: list[Platform] = [
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
-    Platform.TEXT,
 ]
 
 type BlancoUnitConfigEntry = ConfigEntry[BlancoUnitCoordinator]
