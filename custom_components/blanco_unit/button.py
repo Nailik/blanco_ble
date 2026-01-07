@@ -1,6 +1,4 @@
-"""Button entities to define actions for Vogels Motion Mount BLE entities."""
-
-from dataclasses import replace
+"""Button entities to define actions for Blanco Unit BLE entities."""
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.const import EntityCategory
@@ -17,48 +15,43 @@ async def async_setup_entry(
     config_entry: BlancoUnitConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ):
-    """Set up the RefreshData and SelectPreset buttons."""
+    """Set up the Disconnect and RefreshData buttons."""
     coordinator: BlancoUnitCoordinator = config_entry.runtime_data
 
     async_add_entities(
         [
             DisconnectButton(coordinator),
-            UpdateButton(coordinator),
+            RefreshDataButton(coordinator),
         ]
     )
 
 
 class DisconnectButton(BlancoUnitBaseEntity, ButtonEntity):
-    """Set up the Button that provides an action to disconnect data."""
+    """Button that provides an action to disconnect from the device."""
 
     _attr_unique_id = "disconnect"
     _attr_translation_key = _attr_unique_id
-    _attr_icon = "mdi:power-plug-off"
+    _attr_icon = "mdi:connection"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def available(self) -> bool:
         """Set availability only if device is connected currently."""
-        return self.coordinator.data.connected
+        return super().available and self.coordinator.data.connected
 
     async def async_press(self):
         """Execute disconnect."""
         await self.coordinator.disconnect()
 
 
-class UpdateButton(BlancoUnitBaseEntity, ButtonEntity):
-    """Set up the Button that provides an action to disconnect data."""
+class RefreshDataButton(BlancoUnitBaseEntity, ButtonEntity):
+    """Button that provides an action to refresh device data."""
 
-    _attr_unique_id = "update"
+    _attr_unique_id = "refresh_data"
     _attr_translation_key = _attr_unique_id
-    _attr_icon = "mdi:power-plug-off"
+    _attr_icon = "mdi:refresh"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    @property
-    def available(self) -> bool:
-        """Set availability only if device is connected currently."""
-        return True
-
     async def async_press(self):
-        """Execute disconnect."""
-        await self.coordinator.read_data()
+        """Execute data refresh."""
+        await self.coordinator.refresh_data()

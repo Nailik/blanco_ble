@@ -27,8 +27,8 @@ class BlancoUnitBaseEntity(CoordinatorEntity[BlancoUnitCoordinator]):
 
     @property
     def available(self) -> bool:
-        """Set availability of the entities only when the ble device is available."""
-        return True
+        """Set availability of the entities only when the BLE device is available."""
+        return self.coordinator.data is not None and self.coordinator.data.available
 
     @callback
     def _handle_coordinator_update(self) -> None:

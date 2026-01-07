@@ -134,7 +134,7 @@ class BlancoUnitConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
             _LOGGER.debug("await get_permissions")
-            result = await validate_pin(client, user_input.get(CONF_PIN))
+            result = await validate_pin(client, str(user_input[CONF_PIN]))
             _LOGGER.debug("get_permission returned %s", result)
             if not result:
                 return ValidationResult({CONF_ERROR: "error_invalid_authentication"})

@@ -1,7 +1,7 @@
-"""Select entities to define properties for Vogels Motion Mount BLE entities."""
+"""Select entities to define properties for Blanco Unit BLE entities."""
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -15,49 +15,71 @@ async def async_setup_entry(
     config_entry: BlancoUnitConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ):
-    """Set up the Selectors for automove."""
+    """Set up the Selectors for temperature and water hardness."""
     coordinator: BlancoUnitCoordinator = config_entry.runtime_data
 
-    async_add_entities([])
+    async_add_entities(
+        [
+            TemperatureSelect(coordinator),
+            WaterHardnessSelect(coordinator),
+        ]
+    )
 
 
-'''
-class AutomoveSelect(VogelsMotionMountBleBaseEntity, SelectEntity):
-    """Implementation of the Automove Selector."""
+class TemperatureSelect(BlancoUnitBaseEntity, SelectEntity):
+    """Implementation of the Temperature Selector (4-10°C)."""
 
-    _attr_unique_id = "auto_move"
+    _attr_unique_id = "temperature"
     _attr_translation_key = _attr_unique_id
-    _attr_options = ["0", "1", "2", "3", "4", "5"]
-    _attr_icon = "mdi:autorenew"
+    _attr_options = ["4", "5", "6", "7", "8", "9", "10"]
+    _attr_icon = "mdi:thermometer"
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_unit_of_measurement = UnitOfTemperature.CELSIUS
+
+    @property
+    def available(self) -> bool:
+        """Set availability if settings are available."""
+        return (
+            super().available
+            and self.coordinator.data.settings is not None
+        )
+
+    @property
+    def current_option(self) -> str | None:
+        """Return the current temperature setting."""
+        if self.coordinator.data.settings is None:
+            return None
+        return str(self.coordinator.data.settings.set_point_cooling)
+
+    async def async_select_option(self, option: str) -> None:
+        """Select a temperature option."""
+        await self.coordinator.set_temperature(int(option))
+
+
+class WaterHardnessSelect(BlancoUnitBaseEntity, SelectEntity):
+    """Implementation of the Water Hardness Selector (1-9)."""
+
+    _attr_unique_id = "water_hardness"
+    _attr_translation_key = _attr_unique_id
+    _attr_options = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    _attr_icon = "mdi:water-opacity"
     _attr_entity_category = EntityCategory.CONFIG
 
     @property
     def available(self) -> bool:
-        """Set availability if preset exists and user has permission."""
-        return super().available and self.coordinator.data.permissions.change_tv_on_off_detection
+        """Set availability if settings are available."""
+        return (
+            super().available
+            and self.coordinator.data.settings is not None
+        )
 
     @property
     def current_option(self) -> str | None:
-        """Return the current active automove option."""
-        automove = self.coordinator.data.automove.value
-        # Off → always "0"
-        if automove % 2:
-            return "0"
-        # On → HDMI index = (value // 4) + 1
-        return str((automove // 4) + 1)
+        """Return the current water hardness setting."""
+        if self.coordinator.data.settings is None:
+            return None
+        return str(self.coordinator.data.settings.wtr_hardness)
 
     async def async_select_option(self, option: str) -> None:
-        """Select an option."""
-        current_value = self.coordinator.data.automove.value
-
-        if option == "0":
-            # Disabled → pick matching Off for current HDMI
-            hdmi_index = (current_value // 4) + 1
-            enum_value = (hdmi_index - 1) * 4 + 1
-        else:
-            # Enabled → On for selected HDMI
-            hdmi_index = int(option)
-            enum_value = (hdmi_index - 1) * 4
-
-        target = VogelsMotionMountAutoMoveType(enum_value)
-        await self.coordinator.set_automove(target)'''
+        """Select a water hardness level."""
+        await self.coordinator.set_water_hardness(int(option))

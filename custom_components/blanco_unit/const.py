@@ -10,4 +10,6 @@ CONF_PIN = "conf_pin"
 CONF_ERROR = "base"
 BLE_CALLBACK = "unregister_ble_callback"
 
-CHAR_X = "3b531d4d-ed58-4677-b2fa-1c72a86082cf"
+# BLE Protocol Constants
+CHARACTERISTIC_UUID = "3b531d4d-ed58-4677-b2fa-1c72a86082cf"
+MTU_SIZE = 200

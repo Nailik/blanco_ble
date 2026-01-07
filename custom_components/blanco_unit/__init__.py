@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 import logging
 
 from packaging import version
@@ -22,7 +21,6 @@ from homeassistant.exceptions import (
     HomeAssistantError,
     IntegrationError,
 )
-from homeassistant.util import dt as dt_util
 
 from .const import BLE_CALLBACK, CONF_MAC, DOMAIN, MIN_HA_VERSION
 from .coordinator import BlancoUnitCoordinator
@@ -36,7 +34,6 @@ PLATFORMS: list[Platform] = [
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
-    Platform.SWITCH,
     Platform.TEXT,
 ]
 

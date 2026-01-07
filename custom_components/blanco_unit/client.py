@@ -1,305 +1,209 @@
-"""Defines the bluetooth client to control the Vogels Motion Mount."""
+"""Defines the bluetooth client to control the Blanco Unit."""
 
 from __future__ import annotations
-import json
 
 import asyncio
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
+import hashlib
+import json
 import logging
-import struct
+import math
+import random
+import time
+from typing import Any
 
 from bleak import BleakClient
-from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
-from sqlalchemy import Boolean
-import time
-import random
-import hashlib
-from .const import (
-    CHAR_X,
+
+from .const import CHARACTERISTIC_UUID, MTU_SIZE
+from .data import (
+    BlancoUnitIdentity,
+    BlancoUnitSettings,
+    BlancoUnitStatus,
+    BlancoUnitSystemInfo,
+    BlancoUnitWifiInfo,
 )
-import hashlib
-import json
-from typing import Dict
-import hashlib
-import json
-import math
-import asyncio
-import logging
-from typing import List, Dict, Any, Optional
 
 _LOGGER = logging.getLogger(__name__)
 
 # -------------------------------
-# region Setup
+# region Exceptions
 # -------------------------------
 
 
-class BlancoUnitBluetoothClient:
-    """Bluetooth client for controlling the Blanco Unit.
+class BlancoUnitClientError(Exception):
+    """Base exception for Blanco Unit client errors."""
 
-    Handles connection, authentication, reading and writing characteristics.
-    """
 
-    def __init__(
-        self,
-        pin: str,
-        device: BLEDevice,
-        connection_callback: Callable[[bool], None],
-    ) -> None:
-        """Initialize the Blanco Unit client.
+class BlancoUnitAuthenticationError(BlancoUnitClientError):
+    """Exception raised when authentication fails due to wrong PIN."""
 
-        Args:
-            pin: The PIN code for authentication, or None.
-            device: The BLEDevice instance representing the mount.
-            connection_callback: Callback for connection state changes.
-        """
-        self._pin = pin
-        self._device = device
-        self._connection_callback = connection_callback
-        self._client: BleakClient | None = None
-        self._connect_lock = asyncio.Lock()
+    def __init__(self, message: str = "Wrong PIN") -> None:
+        """Initialize BlancoUnitAuthenticationError."""
+        super().__init__(message)
 
-    # -------------------------------
-    # region Read
-    # -------------------------------
 
-    def sha256_hex(self, data: bytes) -> str:
-        return hashlib.sha256(data).hexdigest()
+class BlancoUnitConnectionError(BlancoUnitClientError):
+    """Exception raised when connection fails."""
 
-    def compute_token(self, pin: str, session: int, request_id: int) -> str:
-        salt = f"{session}{request_id}"
-        pin_hash = self.sha256_hex(pin.encode("ascii"))
-        return self.sha256_hex((pin_hash + salt).encode("ascii"))
+    def __init__(self, message: str = "Connection failed") -> None:
+        """Initialize BlancoUnitConnectionError."""
+        super().__init__(message)
 
-    def build_ble_frame(self, seq_hi: int, seq_lo: int, payload: bytes) -> bytes:
-        return b"\xff\x00" + bytes([seq_hi, seq_lo]) + b"\x00" + payload + b"\x00\xff"
 
-    def build_pairing_request(
-        self, pin: str, session: int, request_id: int, timestamp_ms: int
-    ) -> Dict:
-        token = self.compute_token(pin, session, request_id)
+# -------------------------------
+# region Internal Data Models
+# -------------------------------
 
-        return {
-            "session": session,
-            "id": request_id,
-            "type": 1,
-            "token": token,
-            "salt": f"{session}{request_id}",
-            "body": {
-                "meta": {
-                    "dev_type": 1,
-                    "evt_ts": timestamp_ms,
-                    "evt_type": 10,
-                    "evt_ver": 1,
-                },
-                "pars": {},
-            },
-        }
 
-    async def send_pairing_request(
-        self,
-        client: BleakClient,
-        char_uuid: str,
-        pin: str,
-        session: int,
-        request_id: int,
-        timestamp_ms: int,
-        seq_hi: int = 0x02,
-        seq_lo: int = 0x04,
-        mtu: int = 20,
-    ):
-        request = self.build_pairing_request(pin, session, request_id, timestamp_ms)
+@dataclass
+class _RequestMeta:
+    """Internal: Request metadata."""
 
-        payload = json.dumps(request, separators=(",", ":")).encode("utf-8")
+    evt_type: int
+    dev_id: str | None = None
+    dev_type: int = 1
+    evt_ver: int = 1
+    evt_ts: int = field(default_factory=lambda: int(time.time() * 1000))
 
-        frame = self.build_ble_frame(seq_hi, seq_lo, payload)
-
-        # BLE fragmentation
-        for i in range(0, len(frame), mtu):
-            await client.write_gatt_char(char_uuid, frame[i : i + mtu], response=False)
-
-    def generate_token(self, pin: str, salt: str) -> str:
-        # Step 1: SHA256 of the pin → hex digest
-        pin_hash_hex = hashlib.sha256(
-            pin.encode("utf-8")
-        ).hexdigest()  # 64-char hex string
-
-        # Step 2: Concatenate pin_hash_hex (as bytes) + salt (as bytes)
-        combined = pin_hash_hex.encode("utf-8") + salt.encode("utf-8")
-
-        # Step 3: SHA256 of the combined bytes → final token
-        token = hashlib.sha256(combined).hexdigest()
-        return token
-
-    async def read_data(self):
-        """Read and return the current permissions for the connected Vogels Motion Mount."""
-        client = await self._connect()
-        _LOGGER.debug(f"SodaClient with pin {str(self._pin)}")
-        soda = SodaClient(client, str(self._pin))
-
-        # 1. Pair (Required first)
-        await soda.pair()
-
-        # 2. Fetch Data Sequence (matches log flow)
-        sys_info = await soda.get_system_info()
-        _LOGGER.debug(f"System: {json.dumps(sys_info, indent=2)}")
-
-        settings = await soda.get_settings()
-        _LOGGER.debug(f"Settings: {json.dumps(settings, indent=2)}")
-
-        # Wait a moment between heavy requests
-        await asyncio.sleep(0.5)
-
-        dev_info = await soda.get_device_info()
-        _LOGGER.debug(f"Serial: {json.dumps(dev_info, indent=2)}")
-
-        status = await soda.get_status()
-        _LOGGER.debug(f"Status: {json.dumps(status, indent=2)}")
-
-        errors = await soda.get_errors()
-        _LOGGER.debug(f"Errors: {json.dumps(errors, indent=2)}")
-
-    async def _read(self, char_uuid: str) -> bytes:
-        """Read data by first connecting and then returning the read data."""
-        client = await self._connect()
-        data = await client.read_gatt_char(char_uuid)
-        _LOGGER.debug("Read data %s | %s", char_uuid, data)
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary, omitting None dev_id."""
+        data = asdict(self)
+        if self.dev_id is None:
+            del data["dev_id"]
         return data
 
-    async def _write(self, char_uuid: str, data: dict):
-        """Writes data by first connecting, checking permission status and then writing data. Also reads updated data that is then returned to be verified."""
-        _LOGGER.debug("_write before connect")
-        client = await self._connect()
-        _LOGGER.debug("_write after connect")
 
-        await self.send_ble_json(client, CHAR_X, data)
+@dataclass
+class _RequestBody:
+    """Internal: Request body."""
 
-        _LOGGER.debug("Wrote data %s | %s", char_uuid, data)
+    meta: _RequestMeta
+    opts: dict[str, int] | None = None
+    pars: dict[str, Any] | None = None
 
-    async def send_ble_json(
-        self,
-        client: BleakClient,
-        char_uuid: str,
-        data_dict: dict,
-        start_chunk_id=0x53,
-        max_chunk_size=200,
-    ):
-        """
-        Sends JSON over BLE with chunking.
-        Only the first chunk has the full header; subsequent chunks have 2-byte prefix.
-        """
-        json_bytes = json.dumps(data_dict, separators=(",", ":")).encode("utf-8")
-        total_len = len(json_bytes)
-        chunk_id = start_chunk_id
-        sequence = 0
-
-        for start in range(0, total_len, max_chunk_size):
-            end = start + max_chunk_size
-            payload = json_bytes[start:end]
-
-            if start == 0:
-                # First chunk: full header
-                header = bytes([0xFF, 0x00, 0x02, chunk_id & 0xFF, 0x00])
-                chunk = header + payload
-            else:
-                # Subsequent chunks: just 2-byte prefix
-                chunk = bytes([chunk_id & 0xFF, sequence & 0xFF]) + payload
-
-            # Append end-of-packet marker for last chunk
-            if end >= total_len:
-                chunk += bytes([0x00, 0xFF])
-
-            # Send chunk
-            await client.write_gatt_char(char_uuid, chunk, response=True)
-            _LOGGER.debug("Wrote chunk %s", chunk.hex(" "))
-
-            sequence += 1  # increment sequence for next chunk
-
-    # -------------------------------
-    # region Write
-    # -------------------------------
-
-    # -------------------------------
-    # region Notifications
-    # -------------------------------
-
-    # -------------------------------
-    # region Connection
-    # -------------------------------
-
-    async def disconnect(self):
-        """Disconnect from the Vogels Motion Mount BLE device if connected."""
-        if self._client:
-            await self._client.disconnect()
-
-    async def _connect(self) -> BleakClient:
-        """Connect to the device if not already connected. Read auth status and store it in session data."""
-        async with self._connect_lock:
-            _LOGGER.debug(f"check device exists {self._device}")
-            if self._device:
-                _LOGGER.debug(
-                    f"Connecting to device name {self._device.name} address {self._device.address} details {self._device.details}"
-                )
-            else:
-                _LOGGER.debug("No device to connect to")
-
-            if self._client:
-                _LOGGER.debug("Already connected")
-                return self._client
-
-            _LOGGER.debug(f"creat bleak client with {self._device}")
-
-            self._client = BleakClient(
-                address_or_ble_device=self._device,
-                disconnected_callback=self._handle_disconnect,
-                timeout=40.0,
-                pairing=False,
-            )
-            await self._client.connect()
-            """self._client = await establish_connection(
-                client_class=BleakClientWithServiceCache,
-                device=self._device,
-                name=self._device.name or "Unknown Device",
-                use_services_cache=True,
-                disconnected_callback=self._handle_disconnect,
-            )
-            await self._client.pair()"""
-
-            _LOGGER.debug(
-                f"Connecting ended {self._client} and {self._client.is_connected}"
-            )
-
-            return self._client
-
-    def _handle_disconnect(self, _: BleakClient):
-        """Reset session and call connection callback."""
-        _LOGGER.debug(f"_handle_disconnect")
-        self._client = None
-        self._connection_callback(False)
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        data = {"meta": self.meta.to_dict()}
+        if self.opts:
+            data["opts"] = self.opts
+        if self.pars:
+            data["pars"] = self.pars
+        return data
 
 
-async def validate_pin(client: BleakClient, pin: int | None) -> bool:
-    return True
+@dataclass
+class _RequestEnvelope:
+    """Internal: Complete request envelope."""
+
+    session: int
+    id: int
+    token: str
+    salt: str
+    body: _RequestBody
+    type: int = 1
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "session": self.session,
+            "id": self.id,
+            "type": self.type,
+            "token": self.token,
+            "salt": self.salt,
+            "body": self.body.to_dict(),
+        }
 
 
-CHARACTERISTIC_UUID = "3b531d4d-ed58-4677-b2fa-1c72a86082cf"
+@dataclass
+class _SetTemperaturePars:
+    """Internal: Parameters for setting temperature."""
+
+    cooling_celsius: int
+    heating_celsius: int = 65
+
+    def to_pars(self) -> dict[str, Any]:
+        """Convert to parameters dictionary."""
+        return {
+            "set_point_cooling": {"val": self.cooling_celsius},
+            "set_point_heating": {"val": self.heating_celsius},
+        }
 
 
-class SodaProtocol:
-    """Handles low-level fragmentation and hashing."""
+@dataclass
+class _SetWaterHardnessPars:
+    """Internal: Parameters for setting water hardness."""
 
-    def __init__(self, mtu: int = 200):
+    level: int
+
+    def to_pars(self) -> dict[str, Any]:
+        """Convert to parameters dictionary."""
+        if not (1 <= self.level <= 9):
+            raise ValueError("Hardness level must be 1-9")
+        return {"wtr_hardness": {"val": self.level}}
+
+
+@dataclass
+class _ChangePinPars:
+    """Internal: Parameters for changing PIN."""
+
+    new_pin: str
+
+    def to_pars(self) -> dict[str, Any]:
+        """Convert to parameters dictionary."""
+        if len(self.new_pin) != 5 or not self.new_pin.isdigit():
+            raise ValueError("PIN must be 5 digits")
+        return {"new_pass": self.new_pin}
+
+
+@dataclass
+class _DispensePars:
+    """Internal: Parameters for dispensing water."""
+
+    amount_ml: int
+    co2_intensity: int
+
+    def to_pars(self) -> dict[str, Any]:
+        """Convert to parameters dictionary."""
+        return {"disp_amt": self.amount_ml, "co2_int": self.co2_intensity}
+
+
+@dataclass
+class _SetCalibrationPars:
+    """Internal: Parameters for setting calibration."""
+
+    calib_type: str  # "calib_still_wtr" or "calib_soda_wtr"
+    amount: int
+
+    def to_pars(self) -> dict[str, Any]:
+        """Convert to parameters dictionary."""
+        return {self.calib_type: {"val": self.amount}}
+
+
+# -------------------------------
+# region Protocol Helper
+# -------------------------------
+
+
+class _BlancoUnitProtocol:
+    """Internal protocol handler for packet creation, parsing, and communication."""
+
+    def __init__(self, mtu: int = MTU_SIZE) -> None:
+        """Initialize protocol handler."""
         self.mtu = mtu
+        self.session_id = random.randint(1000000, 9999999)
+        self.msg_id_counter = 1
 
     def calculate_token(self, pin: str, salt: str) -> str:
+        """Calculate authentication token from PIN and salt."""
         pin_hash = hashlib.sha256(pin.encode("utf-8")).hexdigest()
         combined = pin_hash + salt
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
-    def create_packets(self, json_data: Dict[str, Any], msg_id: int) -> List[bytes]:
+    def create_packets(self, json_data: dict[str, Any], msg_id: int) -> list[bytes]:
+        """Create BLE packets from JSON data with fragmentation."""
         payload_str = json.dumps(json_data, separators=(",", ":"))
         payload_bytes = payload_str.encode("utf-8") + b"\x00\xff"
 
@@ -312,12 +216,12 @@ class SodaProtocol:
         else:
             total = 1 + math.ceil((len(payload_bytes) - first_cap) / next_cap)
 
-        # Chunk 0
+        # First packet with header
         packets.append(
             bytes([0xFF, 0x00, total, msg_id, 0x00]) + payload_bytes[:first_cap]
         )
 
-        # Chunk N
+        # Subsequent packets
         offset = first_cap
         idx = 1
         while offset < len(payload_bytes):
@@ -328,7 +232,8 @@ class SodaProtocol:
 
         return packets
 
-    def parse_response(self, raw_chunks: List[bytes]) -> Dict[str, Any]:
+    def parse_response(self, raw_chunks: list[bytes]) -> dict[str, Any]:
+        """Parse BLE response chunks into JSON."""
         if not raw_chunks or raw_chunks[0][0] != 0xFF:
             raise ValueError("Invalid chunk stream")
 
@@ -337,145 +242,528 @@ class SodaProtocol:
 
         for c in raw_chunks[1:]:
             if c[0] != msg_id:
-                raise ValueError("Chunk mismatch")
+                raise ValueError("Chunk message ID mismatch")
             payload.extend(c[2:])
 
         clean = payload.split(b"\x00")[0]
-        return json.loads(clean.decode("utf-8"))
+        try:
+            return json.loads(clean.decode("utf-8"))
+        except Exception as e:
+            _LOGGER.error("JSON parse failed: %s", clean)
+            raise ValueError("Failed to parse JSON response") from e
 
+    def extract_pars(self, response: dict[str, Any]) -> dict[str, Any]:
+        """Extract parameters from response body."""
+        body = response.get("body", {})
+        if "pars" in body:
+            return body["pars"]
+        if body.get("results"):
+            return body["results"][0].get("pars", {})
+        return {}
 
-class SodaClient:
-    """High-level client for the Soda device."""
+    def extract_errors(self, response: dict[str, Any]) -> list[dict[str, Any]]:
+        """Extract error list from response."""
+        pars = self.extract_pars(response)
+        return pars.get("errs", [])
 
-    def __init__(self, client: BleakClient, pin: str):
-        self.client = client
-        self.pin = pin
-        self.protocol = SodaProtocol(mtu=200)
-
-        # State
-        self.session_id = random.randint(1000000, 9999999)
-        self.dev_id: Optional[str] = None
-        self.msg_id_counter = 1
-
-    async def _send_request(self, body_content: Dict[str, Any]) -> Dict[str, Any]:
-        """Generic handler for request/response cycle."""
-
-        # 1. Prepare Request Metadata
-        req_id = random.randint(1000000, 9999999)
-        salt = f"{self.session_id}{req_id}"
-        token = self.protocol.calculate_token(self.pin, salt)
-
-        # Increment internal message ID (1-255)
-        self.msg_id_counter = (self.msg_id_counter % 254) + 1
-
-        # Construct specific 'body' based on whether we are authenticated
-        # Note: 'evt_ts' matches current time in ms
-        current_ts = int(time.time() * 1000)
-
-        # Merge the specific body content with the generic envelope
-        full_body = {
-            "meta": {
-                "dev_type": 1,
-                "evt_ts": current_ts,
-                "evt_ver": 1,
-                # evt_type 7 is standard for commands, 10 is for pairing
-                "evt_type": body_content.get("meta", {}).get("evt_type", 7),
-            },
-            **{k: v for k, v in body_content.items() if k != "meta"},
-        }
-
-        # Inject dev_id if we have it (required for all non-pairing requests)
-        if self.dev_id:
-            full_body["meta"]["dev_id"] = self.dev_id
-
-        payload = {
-            "session": self.session_id,
-            "id": req_id,
-            "type": 1,
-            "token": token,
-            "salt": salt,
-            "body": full_body,
-        }
-
-        # 2. Write
-        packets = self.protocol.create_packets(payload, self.msg_id_counter)
-        _LOGGER.debug(f"Sending ReqID {req_id} ({len(packets)} chunks)...")
-
-        for p in packets:
-            await self.client.write_gatt_char(CHARACTERISTIC_UUID, p, response=True)
-
-        # 3. Read (Poll Loop)
+    async def read_response_chunks(self, client: BleakClient) -> list[bytes]:
+        """Read response chunks from the characteristic."""
         chunks = []
         expected = 1
         last_data = b""
         attempts = 0
+        max_attempts = 40
 
-        while len(chunks) < expected and attempts < 30:
+        while len(chunks) < expected and attempts < max_attempts:
             try:
-                data = await self.client.read_gatt_char(CHARACTERISTIC_UUID)
+                data = await client.read_gatt_char(CHARACTERISTIC_UUID)
                 if data != last_data:
                     last_data = data
                     chunks.append(data)
                     if data[0] == 0xFF:
                         expected = data[2]
-                else:
-                    await asyncio.sleep(0.05)
                 attempts += 1
-            except Exception as e:
-                _LOGGER.error(f"Read error: {e}")
+            except Exception as e:  # noqa: BLE001
+                _LOGGER.error("Read error: %s", e)
                 break
 
         if len(chunks) != expected:
-            raise TimeoutError("Failed to receive complete response")
+            raise TimeoutError(
+                f"Incomplete response: got {len(chunks)}/{expected} chunks"
+            )
 
-        return self.protocol.parse_response(chunks)
+        return chunks
 
-    async def pair(self):
-        """Initial Pairing Request (evt_type: 10)."""
-        _LOGGER.info("Pairing...")
+    async def send_pairing_request(
+        self, client: BleakClient, pin: str
+    ) -> dict[str, Any]:
+        """Send pairing request and return parsed response."""
+        meta = _RequestMeta(evt_type=10, dev_id=None)
+        body = _RequestBody(meta=meta, pars={})
 
-        # Pairing has specific meta requirements
-        body = {"meta": {"evt_type": 10}, "pars": {}}
+        req_id = random.randint(1000000, 9999999)
+        salt = f"{self.session_id}{req_id}"
+        token = self.calculate_token(pin, salt)
 
-        resp = await self._send_request(body)
+        envelope = _RequestEnvelope(
+            session=self.session_id, id=req_id, token=token, salt=salt, body=body
+        )
 
-        # Capture the dev_id for future requests
+        # Increment message ID counter (1-255)
+        self.msg_id_counter = (self.msg_id_counter % 254) + 1
+
+        request_dict = envelope.to_dict()
+        packets = self.create_packets(request_dict, self.msg_id_counter)
+
+        _LOGGER.debug("Sending pairing request (ReqID: %s)", req_id)
+
+        # Send packets
+        for packet in packets:
+            await client.write_gatt_char(CHARACTERISTIC_UUID, packet, response=True)
+
+        # Read response
+        chunks = await self.read_response_chunks(client)
+        return self.parse_response(chunks)
+
+    async def send_request(
+        self,
+        client: BleakClient,
+        pin: str,
+        dev_id: str,
+        evt_type: int,
+        ctrl: int | None = None,
+        pars: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Send a general request and return parsed response."""
+        meta = _RequestMeta(evt_type=evt_type, dev_id=dev_id)
+        opts_dict: dict[str, int] | None = {"ctrl": ctrl} if ctrl is not None else None
+        body = _RequestBody(meta=meta, opts=opts_dict, pars=pars)
+
+        req_id = random.randint(1000000, 9999999)
+        salt = f"{self.session_id}{req_id}"
+        token = self.calculate_token(pin, salt)
+
+        envelope = _RequestEnvelope(
+            session=self.session_id,
+            id=req_id,
+            token=token,
+            salt=salt,
+            body=body,
+        )
+
+        # Increment message ID counter (1-255)
+        self.msg_id_counter = (self.msg_id_counter % 254) + 1
+
+        request_dict = envelope.to_dict()
+        packets = self.create_packets(request_dict, self.msg_id_counter)
+
+        _LOGGER.debug("Sending request (ReqID: %s, %d packets)", req_id, len(packets))
+
+        # Send packets
+        for packet in packets:
+            await client.write_gatt_char(CHARACTERISTIC_UUID, packet, response=True)
+
+        # Read response
+        chunks = await self.read_response_chunks(client)
+        return self.parse_response(chunks)
+
+
+# -------------------------------
+# region Client Implementation
+# -------------------------------
+
+
+class BlancoUnitBluetoothClient:
+    """Bluetooth client for controlling the Blanco Unit.
+
+    Handles connection, authentication, and all device operations.
+    """
+
+    def __init__(
+        self,
+        pin: str,
+        device: BLEDevice,
+        connection_callback: Callable[[bool], None],
+    ) -> None:
+        """Initialize the Blanco Unit Bluetooth client.
+
+        Args:
+            pin: The 5-digit PIN code for authentication.
+            device: The BLEDevice instance representing the Blanco Unit.
+            connection_callback: Callback for connection state changes.
+        """
+        if len(pin) != 5 or not pin.isdigit():
+            raise ValueError("PIN must be exactly 5 digits")
+
+        self._pin = pin
+        self._device = device
+        self._connection_callback = connection_callback
+        self._session_data: _BlancoUnitSessionData | None = None
+        self._connect_lock = asyncio.Lock()
+
+    @property
+    def device_id(self) -> str | None:
+        """Return the device ID from the current session, or None if not connected."""
+        return self._session_data.dev_id if self._session_data else None
+
+    # -------------------------------
+    # region Connection Management
+    # -------------------------------
+
+    async def disconnect(self) -> None:
+        """Disconnect from the Blanco Unit BLE device if connected."""
+        if self._session_data:
+            await self._session_data.client.disconnect()
+
+    async def _connect(self) -> _BlancoUnitSessionData:
+        """Connect to the device if not already connected and authenticate."""
+        async with self._connect_lock:
+            _LOGGER.debug("Connecting to device %s", self._device.address)
+            if self._session_data:
+                _LOGGER.debug("Already connected")
+                return self._session_data
+
+            client = await establish_connection(
+                client_class=BleakClientWithServiceCache,
+                device=self._device,
+                name=self._device.name or "Unknown Device",
+                disconnected_callback=self._handle_disconnect,
+            )
+
+            # Create protocol instance for this session
+            protocol = _BlancoUnitProtocol(mtu=MTU_SIZE)
+
+            # Perform initial pairing
+            dev_id = await self._perform_pairing(client, protocol)
+
+            _LOGGER.debug("Connected and paired with device ID: %s", dev_id)
+            self._session_data = _BlancoUnitSessionData(
+                client=client,
+                dev_id=dev_id,
+                protocol=protocol,
+            )
+            self._connection_callback(self._session_data.client.is_connected)
+            return self._session_data
+
+    def _handle_disconnect(self, _: BleakClient) -> None:
+        """Reset session and call connection callback."""
+        _LOGGER.debug("Device disconnected")
+        self._session_data = None
+        self._connection_callback(False)
+
+    async def _perform_pairing(
+        self, client: BleakClient, protocol: _BlancoUnitProtocol
+    ) -> str:
+        """Perform initial pairing to get device ID.
+
+        Raises:
+            BlancoUnitAuthenticationError: If PIN is wrong (error code 4).
+            BlancoUnitConnectionError: If device ID cannot be extracted.
+        """
+        # Validate PIN and get response
+        is_valid, response = await validate_pin(client, self._pin, protocol)
+        if not is_valid:
+            raise BlancoUnitAuthenticationError("Wrong PIN - Authentication failed")
+
+        # Extract device ID from results (always in results[0].meta.dev_id)
         try:
-            self.dev_id = resp["body"]["meta"]["dev_id"]
-            _LOGGER.info(f"Paired! Device ID: {self.dev_id}")
-        except KeyError:
-            # Fallback if structure varies
-            try:
-                # Sometimes results are in a list?
-                self.dev_id = resp["body"]["results"][0]["meta"]["dev_id"]
-                _LOGGER.info(f"Paired! Device ID (from results): {self.dev_id}")
-            except:
-                _LOGGER.warning("Could not extract dev_id from pairing response")
+            body = response.get(
+                "body", {}
+            )  # TODO use one function with validate pin do not do logic twice
+            if "dev_id" in body.get("meta", {}):
+                return body["meta"]["dev_id"]
+        except (KeyError, IndexError, TypeError) as e:
+            raise BlancoUnitConnectionError("Failed to extract device ID") from e
 
-        return resp
+        raise BlancoUnitConnectionError("No device ID in pairing response")
 
-    async def get_system_info(self):
-        """(evt_type: 2, ctrl: 3) - Versions, Name, Reset Count"""
-        _LOGGER.info("Fetching System Info...")
-        return await self._send_request({"opts": {"ctrl": 3}, "pars": {"evt_type": 2}})
+    async def _execute_transaction(
+        self,
+        evt_type: int,
+        ctrl: int | None = None,
+        pars: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Execute a request-response transaction."""
+        session_data = await self._connect()
 
-    async def get_settings(self):
-        """(evt_type: 5, ctrl: 3) - Calibration, Filter Life"""
-        _LOGGER.info("Fetching Settings...")
-        return await self._send_request({"opts": {"ctrl": 3}, "pars": {"evt_type": 5}})
+        response = await session_data.protocol.send_request(
+            client=session_data.client,
+            pin=self._pin,
+            dev_id=session_data.dev_id,
+            evt_type=evt_type,
+            ctrl=ctrl,
+            pars=pars,
+        )
 
-    async def get_device_info(self):
-        """(ctrl: 2, empty pars) - Serial Number, Service Code"""
-        _LOGGER.info("Fetching Device Serial/Info...")
-        # Note: This uses ctrl 2 and empty pars, unlike the others
-        return await self._send_request({"opts": {"ctrl": 2}, "pars": {}})
+        # Check for errors
+        errors = session_data.protocol.extract_errors(response)
+        for error in errors:
+            if error.get("err_code") == 4:
+                raise BlancoUnitAuthenticationError(
+                    "Authentication error during operation"
+                )
 
-    async def get_status(self):
-        """(evt_type: 6, ctrl: 3) - Tap State, CO2, Filter Rest"""
-        _LOGGER.info("Fetching Status...")
-        return await self._send_request({"opts": {"ctrl": 3}, "pars": {"evt_type": 6}})
+        return response
 
-    async def get_errors(self):
-        """(evt_type: 4, ctrl: 3) - Error Log"""
-        _LOGGER.info("Fetching Errors...")
-        return await self._send_request({"opts": {"ctrl": 3}, "pars": {"evt_type": 4}})
+    # -------------------------------
+    # region Read Operations
+    # -------------------------------
+
+    async def get_system_info(self) -> BlancoUnitSystemInfo:
+        """Read and return system information (firmware versions, device name, reset count)."""
+        session_data = await self._connect()
+        resp = await self._execute_transaction(evt_type=7, ctrl=3, pars={"evt_type": 2})
+        pars = session_data.protocol.extract_pars(resp)
+        return BlancoUnitSystemInfo(
+            sw_ver_comm_con=pars.get("sw_ver_comm_con", {}).get("val", "Unknown"),
+            sw_ver_elec_con=pars.get("sw_ver_elec_con", {}).get("val", "Unknown"),
+            sw_ver_main_con=pars.get("sw_ver_main_con", {}).get("val", "Unknown"),
+            dev_name=pars.get("dev_name", {}).get("val", "Unknown"),
+            reset_cnt=pars.get("reset_cnt", {}).get("val", 0),
+        )
+
+    async def get_settings(self) -> BlancoUnitSettings:
+        """Read and return device configuration settings."""
+        session_data = await self._connect()
+        resp = await self._execute_transaction(evt_type=7, ctrl=3, pars={"evt_type": 5})
+        pars = session_data.protocol.extract_pars(resp)
+        return BlancoUnitSettings(
+            calib_still_wtr=pars.get("calib_still_wtr", {}).get("val", 0),
+            calib_soda_wtr=pars.get("calib_soda_wtr", {}).get("val", 0),
+            filter_life_tm=pars.get("filter_life_tm", {}).get("val", 0),
+            post_flush_quantity=pars.get("post_flush_quantity", {}).get("val", 0),
+            set_point_cooling=pars.get("set_point_cooling", {}).get("val", 0),
+            wtr_hardness=pars.get("wtr_hardness", {}).get("val", 0),
+        )
+
+    async def get_status(self) -> BlancoUnitStatus:
+        """Read and return real-time device status."""
+        session_data = await self._connect()
+        resp = await self._execute_transaction(evt_type=7, ctrl=3, pars={"evt_type": 6})
+        pars = session_data.protocol.extract_pars(resp)
+        return BlancoUnitStatus(
+            tap_state=pars.get("tap_state", {}).get("val", 0),
+            filter_rest=pars.get("filter_rest", {}).get("val", 0),
+            co2_rest=pars.get("co2_rest", {}).get("val", 0),
+            wtr_disp_active=pars.get("wtr_disp_active", {}).get("val", False),
+            firm_upd_avlb=pars.get("firm_upd_avlb", {}).get("val", False),
+            set_point_cooling=pars.get("set_point_cooling", {}).get("val", 0),
+            clean_mode_state=pars.get("clean_mode_state", {}).get("val", 0),
+            err_bits=pars.get("err_bits", {}).get("val", 0),
+        )
+
+    async def get_device_identity(self) -> BlancoUnitIdentity:
+        """Read and return device identity (serial number, service code)."""
+        session_data = await self._connect()
+        resp = await self._execute_transaction(evt_type=7, ctrl=2, pars={})
+        pars = session_data.protocol.extract_pars(resp)
+        return BlancoUnitIdentity(
+            serial_no=pars.get("ser_no", "Unknown"),
+            service_code=pars.get("serv_code", "Unknown"),
+        )
+
+    async def get_wifi_info(self) -> BlancoUnitWifiInfo:
+        """Read and return WiFi and network information."""
+        session_data = await self._connect()
+        resp = await self._execute_transaction(evt_type=7, ctrl=10, pars={})
+        pars = session_data.protocol.extract_pars(resp)
+        return BlancoUnitWifiInfo(
+            cloud_connect=pars.get("cloud_connect", {}).get("val", False),
+            ssid=pars.get("ssid", {}).get("val", ""),
+            signal=pars.get("signal", {}).get("val", 0),
+            ip=pars.get("ip", {}).get("val", ""),
+            ble_mac=pars.get("b_mac", {}).get("val", ""),
+            wifi_mac=pars.get("w_mac", {}).get("val", ""),
+            gateway=pars.get("default_gateway", {}).get("val", ""),
+            gateway_mac=pars.get("default_gateway_mac", {}).get("val", ""),
+            subnet=pars.get("subnet", {}).get("val", ""),
+        )
+
+    # -------------------------------
+    # region Write Operations
+    # -------------------------------
+
+    async def set_temperature(self, cooling_celsius: int) -> bool:
+        """Set cooling temperature (4-10°C).
+
+        Args:
+            cooling_celsius: Target cooling temperature in Celsius (4-10).
+
+        Returns:
+            True if successful.
+
+        Raises:
+            ValueError: If temperature is out of range.
+        """
+        if not (4 <= cooling_celsius <= 10):
+            raise ValueError("Temperature must be between 4 and 10°C")
+
+        _LOGGER.info("Setting temperature to %d°C", cooling_celsius)
+        req = _SetTemperaturePars(cooling_celsius=cooling_celsius)
+        resp = await self._execute_transaction(evt_type=7, ctrl=5, pars=req.to_pars())
+        return resp.get("type") == 2
+
+    async def set_water_hardness(self, level: int) -> bool:
+        """Set water hardness level (1-9).
+
+        Args:
+            level: Water hardness level (1-9).
+
+        Returns:
+            True if successful.
+
+        Raises:
+            ValueError: If level is out of range.
+        """
+        _LOGGER.info("Setting water hardness to level %d", level)
+        req = _SetWaterHardnessPars(level=level)
+        resp = await self._execute_transaction(evt_type=7, ctrl=5, pars=req.to_pars())
+        return resp.get("type") == 2
+
+    async def change_pin(self, new_pin: str) -> bool:
+        """Change the device PIN.
+
+        Args:
+            new_pin: New 5-digit PIN.
+
+        Returns:
+            True if successful.
+
+        Raises:
+            ValueError: If PIN format is invalid.
+        """
+        _LOGGER.info("Changing PIN")
+        req = _ChangePinPars(new_pin=new_pin)
+        resp = await self._execute_transaction(evt_type=7, ctrl=13, pars=req.to_pars())
+        if resp.get("type") == 2:
+            self._pin = new_pin
+            return True
+        return False
+
+    async def dispense_water(self, amount_ml: int, co2_intensity: int) -> bool:
+        """Dispense water with specified amount and carbonation.
+
+        Args:
+            amount_ml: Amount in milliliters (100-1500, must be multiple of 100).
+            co2_intensity: CO2 carbonation level (1=still, 2=medium, 3=high).
+
+        Returns:
+            True if dispensing started successfully.
+
+        Raises:
+            ValueError: If amount or intensity is invalid.
+        """
+        if not (100 <= amount_ml <= 1500):
+            raise ValueError("Amount must be between 100ml and 1500ml")
+        if amount_ml % 100 != 0:
+            raise ValueError("Amount must be a multiple of 100ml")
+        if co2_intensity not in (1, 2, 3):
+            raise ValueError("CO2 intensity must be 1 (still), 2 (medium), or 3 (high)")
+
+        _LOGGER.info("Dispensing %dml with CO2 intensity %d", amount_ml, co2_intensity)
+        req = _DispensePars(amount_ml=amount_ml, co2_intensity=co2_intensity)
+        resp = await self._execute_transaction(
+            evt_type=7, ctrl=1000, pars=req.to_pars()
+        )
+        return resp.get("type") == 2
+
+    async def set_calibration_still(self, amount: int) -> bool:
+        """Set calibration amount for still water.
+
+        Args:
+            amount: Calibration amount.
+
+        Returns:
+            True if successful.
+        """
+        _LOGGER.info("Setting still water calibration to %d", amount)
+        req = _SetCalibrationPars(calib_type="calib_still_wtr", amount=amount)
+        resp = await self._execute_transaction(evt_type=7, ctrl=5, pars=req.to_pars())
+        return resp.get("type") == 2
+
+    async def set_calibration_soda(self, amount: int) -> bool:
+        """Set calibration amount for soda water.
+
+        Args:
+            amount: Calibration amount.
+
+        Returns:
+            True if successful.
+        """
+        _LOGGER.info("Setting soda water calibration to %d", amount)
+        req = _SetCalibrationPars(calib_type="calib_soda_wtr", amount=amount)
+        resp = await self._execute_transaction(evt_type=7, ctrl=5, pars=req.to_pars())
+        return resp.get("type") == 2
+
+
+# -------------------------------
+# region Standalone Functions
+# -------------------------------
+
+
+async def validate_pin(
+    client: BleakClient, pin: str, protocol: _BlancoUnitProtocol | None = None
+) -> tuple[bool, dict[str, Any]]:
+    """Test if a PIN is valid by attempting to pair with the device.
+
+    This is a standalone function that works with an existing BleakClient.
+
+    Args:
+        client: An active BleakClient connection.
+        pin: The 5-digit PIN to validate.
+        protocol: Optional protocol instance. If None, creates a new one.
+
+    Returns:
+        Tuple of (is_valid, response_dict):
+            - is_valid: True if PIN is valid, False if wrong PIN (error code 4)
+            - response_dict: The full response from the pairing attempt
+
+    Raises:
+        ValueError: If PIN format is invalid.
+        TimeoutError: If response chunks cannot be read completely.
+        Any other exceptions are propagated (connection errors, etc.)
+    """
+    if len(pin) != 5 or not pin.isdigit():
+        raise ValueError("PIN must be exactly 5 digits")
+
+    _LOGGER.debug("Validating PIN %s", pin)
+
+    # Use provided protocol or create new one
+    if protocol is None:
+        protocol = _BlancoUnitProtocol(mtu=MTU_SIZE)
+
+    # Send pairing request and get response
+    response = await protocol.send_pairing_request(client, pin)
+
+    # Check for authentication error (error code 4)
+    errors = protocol.extract_errors(response)
+    for error in errors:
+        if error.get("err_code") == 4:
+            _LOGGER.debug("PIN validation failed: wrong PIN (error code 4)")
+            return (False, response)
+
+    # Check if we got a device ID in results (successful pairing)
+    try:
+        body_resp = response.get("body", {})
+        if "dev_id" in body_resp.get("meta", {}):
+            _LOGGER.debug("PIN validation successful")
+            return (True, response)
+    except (KeyError, IndexError, TypeError):
+        pass
+
+    _LOGGER.debug("PIN validation failed: no device ID in response")
+    return (False, response)
+
+
+# -------------------------------
+# region Session Data
+# -------------------------------
+
+
+@dataclass
+class _BlancoUnitSessionData:
+    """Internal: Session data stored during connection."""
+
+    client: BleakClient
+    dev_id: str
+    protocol: _BlancoUnitProtocol

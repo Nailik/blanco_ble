@@ -1,4 +1,4 @@
-"""Coordinator for Vogels Motion Mount BLE integration in order to communicate with client."""
+"""Coordinator for Blanco Unit BLE integration in order to communicate with client."""
 
 from collections.abc import Callable
 from dataclasses import replace
@@ -19,11 +19,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ServiceValidationError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .client import BlancoUnitBluetoothClient
+from .client import BlancoUnitAuthenticationError, BlancoUnitBluetoothClient
 from .const import CONF_MAC, CONF_PIN, DOMAIN
-from .data import (
-    BlancoUnitData,
-)
+from .data import BlancoUnitData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +29,7 @@ PARALLEL_UPDATES = 1
 
 
 class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
-    """Vogels Motion Mount BLE coordinator."""
+    """Blanco Unit BLE coordinator."""
 
     # -------------------------------
     # region Setup
@@ -49,21 +47,23 @@ class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
 
         # Store setup data
         self.address = device.address
+        self.mac_address = config_entry.data[CONF_MAC]
 
         # Create client
         self._client = BlancoUnitBluetoothClient(
-            pin=config_entry.data.get(CONF_PIN),
+            pin=str(config_entry.data[CONF_PIN]),
             device=device,
             connection_callback=self._connection_changed,
         )
 
         # Initialise DataUpdateCoordinator
+        # Water dispenser - update more frequently than motion mount (1 minute vs 5 minutes)
         super().__init__(
             hass,
             _LOGGER,
             name=config_entry.title,
             config_entry=config_entry,
-            update_interval=timedelta(minutes=5),
+            update_interval=timedelta(minutes=1),
         )
 
         # Setup listeners
@@ -98,20 +98,78 @@ class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
         await self._client.disconnect()
 
     async def refresh_data(self):
-        """Load data form client."""
+        """Load data from client."""
         self.hass.async_create_task(self.async_request_refresh())
-
-    async def read_data(self):
-        """Load data form client."""
-        await self._client.read_data()
 
     # -------------------------------
     # region Control
     # -------------------------------
 
     async def disconnect(self):
-        """Disconnect form client."""
+        """Disconnect from client."""
         await self._call(self._client.disconnect)
+
+    async def set_temperature(self, cooling_celsius: int):
+        """Set target cooling temperature (4-10°C)."""
+        await self._call(self._client.set_temperature, cooling_celsius)
+        # Refresh settings to verify the change
+        settings = await self._call(self._client.get_settings)
+        if self.data is not None:
+            self.async_set_updated_data(replace(self.data, settings=settings))
+        if settings.set_point_cooling != cooling_celsius:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="not_saved_temperature",
+                translation_placeholders={
+                    "expected": str(cooling_celsius),
+                    "actual": str(settings.set_point_cooling),
+                },
+            )
+
+    async def set_water_hardness(self, level: int):
+        """Set water hardness level (1-9)."""
+        await self._call(self._client.set_water_hardness, level)
+        # Refresh settings to verify the change
+        settings = await self._call(self._client.get_settings)
+        if self.data is not None:
+            self.async_set_updated_data(replace(self.data, settings=settings))
+        if settings.wtr_hardness != level:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="not_saved_water_hardness",
+                translation_placeholders={
+                    "expected": str(level),
+                    "actual": str(settings.wtr_hardness),
+                },
+            )
+
+    async def dispense_water(self, amount_ml: int, co2_intensity: int):
+        """Dispense water with specified amount and CO2 intensity."""
+        await self._call(self._client.dispense_water, amount_ml, co2_intensity)
+        # Trigger refresh after dispensing
+        self.hass.async_create_task(self.async_request_refresh())
+
+    async def change_pin(self, new_pin: str):
+        """Change the device PIN."""
+        await self._call(self._client.change_pin, new_pin)
+        # Disconnect after PIN change as reconnection with new PIN is needed
+        await self.disconnect()
+
+    async def set_calibration_still(self, amount: int):
+        """Set calibration for still water."""
+        await self._call(self._client.set_calibration_still, amount)
+        # Refresh settings to get updated calibration value
+        settings = await self._call(self._client.get_settings)
+        if self.data is not None:
+            self.async_set_updated_data(replace(self.data, settings=settings))
+
+    async def set_calibration_soda(self, amount: int):
+        """Set calibration for soda water."""
+        await self._call(self._client.set_calibration_soda, amount)
+        # Refresh settings to get updated calibration value
+        settings = await self._call(self._client.get_settings)
+        if self.data is not None:
+            self.async_set_updated_data(replace(self.data, settings=settings))
 
     # -------------------------------
     # region Notifications
@@ -128,11 +186,21 @@ class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
     async def _async_update_data(self) -> BlancoUnitData:
         """Fetch data from device."""
         try:
-            # await self._client.read_data()
             return BlancoUnitData(
-                connected=True,
-                device_id="",
+                system_info=await self._client.get_system_info(),
+                settings=await self._client.get_settings(),
+                status=await self._client.get_status(),
+                identity=await self._client.get_device_identity(),
+                wifi_info=await self._client.get_wifi_info(),
+                connected=self.data.connected if self.data is not None else False,
+                available=True,
+                device_id=self._client.device_id or "",
             )
+        except BlancoUnitAuthenticationError as err:
+            self._set_unavailable()
+            # reraise auth issues
+            _LOGGER.debug("_async_update_data ConfigEntryAuthFailed %s", str(err))
+            raise ConfigEntryAuthFailed from err
         except BleakConnectionError as err:
             # treat BleakConnectionError as device not found
             raise UpdateFailed(translation_key="error_device_not_found") from err
@@ -154,6 +222,10 @@ class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
         """Execute a BLE client call safely."""
         try:
             return await func(*args, **kwargs)
+        except BlancoUnitAuthenticationError as err:
+            # reraise auth issues
+            _LOGGER.debug("_call ConfigEntryAuthFailed %s", str(err))
+            raise ConfigEntryAuthFailed from err
         except BleakConnectionError as err:
             _LOGGER.debug("BleakConnectionError Exception %s", repr(err))
             self._set_unavailable()
@@ -162,14 +234,14 @@ class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
                 translation_key="error_device_not_found"
             ) from err
         except BleakNotFoundError as err:
-            _LOGGER.debug("_async_update_data BleakNotFoundError %s", str(err))
+            _LOGGER.debug("_call BleakNotFoundError %s", str(err))
             self._set_unavailable()
             # treat BleakNotFoundError as device not found
             raise ServiceValidationError(
                 translation_key="error_device_not_found"
             ) from err
         except Exception as err:
-            _LOGGER.debug("_async_update_data Exception %s", repr(err))
+            _LOGGER.debug("_call Exception %s", repr(err))
             self._set_unavailable()
             # Device unreachable → tell HA gracefully
             raise ServiceValidationError(
@@ -180,7 +252,7 @@ class BlancoUnitCoordinator(DataUpdateCoordinator[BlancoUnitData]):
     def _set_unavailable(self):
         _LOGGER.debug("_set_unavailable width data %s", str(self.data))
         # trigger rediscovery for the device
-        bluetooth.async_rediscover_address(self.hass, self.config_entry.data[CONF_MAC])
+        bluetooth.async_rediscover_address(self.hass, self.mac_address)
         if self.data is None:  # may be called before data is available
             return
         # tell HA to refresh all entities
