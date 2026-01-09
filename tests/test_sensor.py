@@ -47,7 +47,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .conftest import setup_integration
+from .conftest import setup_integration  # noqa: TID251
 
 
 @pytest.fixture
@@ -137,7 +137,9 @@ async def test_all_entities(
     ):
         await setup_integration(hass, mock_config_entry)
 
-        await snapshot_platform(hass, entity_registry, snapshot, mock_config_entry.entry_id)
+        await snapshot_platform(
+            hass, entity_registry, snapshot, mock_config_entry.entry_id
+        )
 
 
 async def test_async_setup_entry(

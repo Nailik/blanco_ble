@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from bleak.backends.device import BLEDevice
 import pytest
-from bleak import BleakClient
 
 from custom_components.blanco_unit.client import (
     BlancoUnitAuthenticationError,
@@ -25,15 +25,6 @@ from custom_components.blanco_unit.client import (
     _SetWaterHardnessPars,
     validate_pin,
 )
-from custom_components.blanco_unit.const import CHARACTERISTIC_UUID, MTU_SIZE
-from custom_components.blanco_unit.data import (
-    BlancoUnitIdentity,
-    BlancoUnitSettings,
-    BlancoUnitStatus,
-    BlancoUnitSystemInfo,
-    BlancoUnitWifiInfo,
-)
-
 
 # -------------------------------
 # Exception Tests
@@ -77,7 +68,9 @@ def test_client_error_base():
 
 def test_request_meta_to_dict_with_dev_id():
     """Test _RequestMeta.to_dict() with dev_id."""
-    meta = _RequestMeta(evt_type=1, dev_id="device123", dev_type=1, evt_ver=1, evt_ts=1234567890)
+    meta = _RequestMeta(
+        evt_type=1, dev_id="device123", dev_type=1, evt_ver=1, evt_ts=1234567890
+    )
     result = meta.to_dict()
     assert result["evt_type"] == 1
     assert result["dev_id"] == "device123"
@@ -455,7 +448,9 @@ async def test_protocol_send_pairing_request():
     # Mock response
     response_data = {"body": {"results": [{"pars": {"dev_id": "device123"}}]}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -475,7 +470,9 @@ async def test_protocol_send_request_with_ctrl():
     # Mock response
     response_data = {"body": {"results": [{"pars": {"status": "ok"}}]}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -497,7 +494,9 @@ async def test_protocol_send_request_without_ctrl():
     # Mock response
     response_data = {"body": {"results": [{"pars": {"status": "ok"}}]}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -543,7 +542,9 @@ async def test_validate_pin_success_with_dev_id():
         "body": {"results": [{"pars": {}}], "meta": {"dev_id": "device123"}}
     }
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -562,7 +563,9 @@ async def test_validate_pin_wrong_pin_error_code():
     # Mock auth error response
     response_data = {"body": {"results": [{"pars": {"errs": [{"err_code": 4}]}}]}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -580,7 +583,9 @@ async def test_validate_pin_no_device_id():
     # Mock response without device ID
     response_data = {"body": {"results": [{"pars": {}}]}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -619,7 +624,9 @@ async def test_validate_pin_with_provided_protocol():
         "body": {"results": [{"pars": {}}], "meta": {"dev_id": "device789"}}
     }
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_client.write_gatt_char = AsyncMock()
     mock_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -630,12 +637,6 @@ async def test_validate_pin_with_provided_protocol():
     assert response["body"]["meta"]["dev_id"] == "device789"
 
 
-# Import asyncio for async tests (if not already imported)
-import asyncio  # noqa: E402, F401
-
-from bleak.backends.device import BLEDevice
-
-
 # -------------------------------
 # BlancoUnitBluetoothClient Tests
 # -------------------------------
@@ -643,10 +644,14 @@ from bleak.backends.device import BLEDevice
 
 def test_bluetooth_client_init_valid_pin():
     """Test BlancoUnitBluetoothClient initialization with valid PIN."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     assert client._pin == "12345"
     assert client._device == device
@@ -656,28 +661,40 @@ def test_bluetooth_client_init_valid_pin():
 
 def test_bluetooth_client_init_invalid_pin_length():
     """Test BlancoUnitBluetoothClient initialization with invalid PIN length."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
     with pytest.raises(ValueError, match="PIN must be exactly 5 digits"):
-        BlancoUnitBluetoothClient(pin="123", device=device, connection_callback=callback)
+        BlancoUnitBluetoothClient(
+            pin="123", device=device, connection_callback=callback
+        )
 
 
 def test_bluetooth_client_init_invalid_pin_format():
     """Test BlancoUnitBluetoothClient initialization with non-digit PIN."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
     with pytest.raises(ValueError, match="PIN must be exactly 5 digits"):
-        BlancoUnitBluetoothClient(pin="abcde", device=device, connection_callback=callback)
+        BlancoUnitBluetoothClient(
+            pin="abcde", device=device, connection_callback=callback
+        )
 
 
 def test_bluetooth_client_device_id_when_not_connected():
     """Test device_id property returns None when not connected."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     assert client.device_id is None
 
@@ -686,10 +703,14 @@ def test_bluetooth_client_device_id_when_connected():
     """Test device_id property returns device ID when connected."""
     from custom_components.blanco_unit.client import _BlancoUnitSessionData
 
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock session data
     mock_client = AsyncMock()
@@ -703,10 +724,14 @@ def test_bluetooth_client_device_id_when_connected():
 
 def test_bluetooth_client_is_connected_when_not_connected():
     """Test is_connected property returns False when not connected."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     assert client.is_connected is False
 
@@ -715,10 +740,14 @@ def test_bluetooth_client_is_connected_when_connected():
     """Test is_connected property returns True when connected."""
     from custom_components.blanco_unit.client import _BlancoUnitSessionData
 
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock session data with connected client
     mock_client = AsyncMock()
@@ -736,10 +765,14 @@ async def test_bluetooth_client_disconnect_when_connected():
     """Test disconnect method when client is connected."""
     from custom_components.blanco_unit.client import _BlancoUnitSessionData
 
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock session data
     mock_client = AsyncMock()
@@ -756,10 +789,14 @@ async def test_bluetooth_client_disconnect_when_connected():
 @pytest.mark.asyncio
 async def test_bluetooth_client_disconnect_when_not_connected():
     """Test disconnect method when client is not connected."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Should not raise an error
     await client.disconnect()
@@ -769,10 +806,14 @@ async def test_bluetooth_client_disconnect_when_not_connected():
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_connect_first_time(mock_establish):
     """Test _connect method on first connection."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -782,7 +823,9 @@ async def test_bluetooth_client_connect_first_time(mock_establish):
     # Mock pairing response
     response_data = {"body": {"meta": {"dev_id": "device123"}}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_ble_client.write_gatt_char = AsyncMock()
     mock_ble_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -801,10 +844,14 @@ async def test_bluetooth_client_connect_already_connected(mock_establish):
     """Test _connect method when already connected."""
     from custom_components.blanco_unit.client import _BlancoUnitSessionData
 
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Pre-populate session data
     mock_ble_client = AsyncMock()
@@ -823,13 +870,18 @@ async def test_bluetooth_client_connect_already_connected(mock_establish):
 
 def test_bluetooth_client_handle_disconnect():
     """Test _handle_disconnect callback."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Set session data
     from custom_components.blanco_unit.client import _BlancoUnitSessionData
+
     mock_ble_client = AsyncMock()
     mock_protocol = MagicMock()
     client._session_data = _BlancoUnitSessionData(
@@ -846,18 +898,26 @@ def test_bluetooth_client_handle_disconnect():
 @pytest.mark.asyncio
 async def test_bluetooth_client_perform_pairing_success():
     """Test _perform_pairing with successful authentication."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     mock_ble_client = AsyncMock()
     mock_protocol = _BlancoUnitProtocol()
 
     # Mock successful pairing response
-    response_data = {"body": {"results": [{"pars": {}}], "meta": {"dev_id": "device456"}}}
+    response_data = {
+        "body": {"results": [{"pars": {}}], "meta": {"dev_id": "device456"}}
+    }
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_ble_client.write_gatt_char = AsyncMock()
     mock_ble_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -870,10 +930,14 @@ async def test_bluetooth_client_perform_pairing_success():
 @pytest.mark.asyncio
 async def test_bluetooth_client_perform_pairing_wrong_pin():
     """Test _perform_pairing with wrong PIN (error code 4)."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="99999", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="99999", device=device, connection_callback=callback
+    )
 
     mock_ble_client = AsyncMock()
     mock_protocol = _BlancoUnitProtocol()
@@ -881,7 +945,9 @@ async def test_bluetooth_client_perform_pairing_wrong_pin():
     # Mock auth error response
     response_data = {"body": {"results": [{"pars": {"errs": [{"err_code": 4}]}}]}}
     json_str = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + json_str.encode("utf-8") + b"\x00\xff"
+    )
 
     mock_ble_client.write_gatt_char = AsyncMock()
     mock_ble_client.read_gatt_char = AsyncMock(return_value=response_packet)
@@ -894,10 +960,14 @@ async def test_bluetooth_client_perform_pairing_wrong_pin():
 @patch("custom_components.blanco_unit.client.validate_pin")
 async def test_bluetooth_client_perform_pairing_no_device_id(mock_validate_pin):
     """Test _perform_pairing when no device ID is returned."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     mock_ble_client = AsyncMock()
     mock_protocol = _BlancoUnitProtocol()
@@ -914,10 +984,14 @@ async def test_bluetooth_client_perform_pairing_no_device_id(mock_validate_pin):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_execute_transaction_success(mock_establish):
     """Test _execute_transaction with successful response."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -927,15 +1001,22 @@ async def test_bluetooth_client_execute_transaction_success(mock_establish):
     # Mock pairing response
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     # Mock transaction response
     transaction_data = {"body": {"results": [{"pars": {"status": "ok"}}]}, "type": 2}
     transaction_json = json.dumps(transaction_data)
-    transaction_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + transaction_json.encode("utf-8") + b"\x00\xff"
+    transaction_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00])
+        + transaction_json.encode("utf-8")
+        + b"\x00\xff"
+    )
 
     # Simulate two reads: first for pairing, second for transaction
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -946,7 +1027,9 @@ async def test_bluetooth_client_execute_transaction_success(mock_establish):
     mock_ble_client.write_gatt_char = AsyncMock()
     mock_ble_client.read_gatt_char = mock_read
 
-    response = await client._execute_transaction(evt_type=7, ctrl=3, pars={"test": "data"})
+    response = await client._execute_transaction(
+        evt_type=7, ctrl=3, pars={"test": "data"}
+    )
 
     assert response["type"] == 2
 
@@ -955,10 +1038,14 @@ async def test_bluetooth_client_execute_transaction_success(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_execute_transaction_auth_error(mock_establish):
     """Test _execute_transaction with authentication error."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -968,15 +1055,22 @@ async def test_bluetooth_client_execute_transaction_auth_error(mock_establish):
     # Mock pairing response
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     # Mock transaction response with auth error
     transaction_data = {"body": {"results": [{"pars": {"errs": [{"err_code": 4}]}}]}}
     transaction_json = json.dumps(transaction_data)
-    transaction_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + transaction_json.encode("utf-8") + b"\x00\xff"
+    transaction_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00])
+        + transaction_json.encode("utf-8")
+        + b"\x00\xff"
+    )
 
     # Simulate two reads
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -987,7 +1081,9 @@ async def test_bluetooth_client_execute_transaction_auth_error(mock_establish):
     mock_ble_client.write_gatt_char = AsyncMock()
     mock_ble_client.read_gatt_char = mock_read
 
-    with pytest.raises(BlancoUnitAuthenticationError, match="Authentication error during operation"):
+    with pytest.raises(
+        BlancoUnitAuthenticationError, match="Authentication error during operation"
+    ):
         await client._execute_transaction(evt_type=7, ctrl=3)
 
 
@@ -995,10 +1091,14 @@ async def test_bluetooth_client_execute_transaction_auth_error(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_get_system_info(mock_establish):
     """Test get_system_info method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1008,25 +1108,32 @@ async def test_bluetooth_client_get_system_info(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     system_data = {
         "body": {
-            "results": [{
-                "pars": {
-                    "sw_ver_comm_con": {"val": "1.0.0"},
-                    "sw_ver_elec_con": {"val": "2.0.0"},
-                    "sw_ver_main_con": {"val": "3.0.0"},
-                    "dev_name": {"val": "Test Device"},
-                    "reset_cnt": {"val": 5}
+            "results": [
+                {
+                    "pars": {
+                        "sw_ver_comm_con": {"val": "1.0.0"},
+                        "sw_ver_elec_con": {"val": "2.0.0"},
+                        "sw_ver_main_con": {"val": "3.0.0"},
+                        "dev_name": {"val": "Test Device"},
+                        "reset_cnt": {"val": 5},
+                    }
                 }
-            }]
+            ]
         }
     }
     system_json = json.dumps(system_data)
-    system_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + system_json.encode("utf-8") + b"\x00\xff"
+    system_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + system_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1050,10 +1157,14 @@ async def test_bluetooth_client_get_system_info(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_get_settings(mock_establish):
     """Test get_settings method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1063,26 +1174,33 @@ async def test_bluetooth_client_get_settings(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     settings_data = {
         "body": {
-            "results": [{
-                "pars": {
-                    "calib_still_wtr": {"val": 5},
-                    "calib_soda_wtr": {"val": 6},
-                    "filter_life_tm": {"val": 365},
-                    "post_flush_quantity": {"val": 100},
-                    "set_point_cooling": {"val": 7},
-                    "wtr_hardness": {"val": 4}
+            "results": [
+                {
+                    "pars": {
+                        "calib_still_wtr": {"val": 5},
+                        "calib_soda_wtr": {"val": 6},
+                        "filter_life_tm": {"val": 365},
+                        "post_flush_quantity": {"val": 100},
+                        "set_point_cooling": {"val": 7},
+                        "wtr_hardness": {"val": 4},
+                    }
                 }
-            }]
+            ]
         }
     }
     settings_json = json.dumps(settings_data)
-    settings_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + settings_json.encode("utf-8") + b"\x00\xff"
+    settings_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + settings_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1107,10 +1225,14 @@ async def test_bluetooth_client_get_settings(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_get_status(mock_establish):
     """Test get_status method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1120,28 +1242,35 @@ async def test_bluetooth_client_get_status(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     status_data = {
         "body": {
-            "results": [{
-                "pars": {
-                    "tap_state": {"val": 2},
-                    "filter_rest": {"val": 80},
-                    "co2_rest": {"val": 90},
-                    "wtr_disp_active": {"val": True},
-                    "firm_upd_avlb": {"val": False},
-                    "set_point_cooling": {"val": 7},
-                    "clean_mode_state": {"val": 1},
-                    "err_bits": {"val": 0}
+            "results": [
+                {
+                    "pars": {
+                        "tap_state": {"val": 2},
+                        "filter_rest": {"val": 80},
+                        "co2_rest": {"val": 90},
+                        "wtr_disp_active": {"val": True},
+                        "firm_upd_avlb": {"val": False},
+                        "set_point_cooling": {"val": 7},
+                        "clean_mode_state": {"val": 1},
+                        "err_bits": {"val": 0},
+                    }
                 }
-            }]
+            ]
         }
     }
     status_json = json.dumps(status_data)
-    status_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + status_json.encode("utf-8") + b"\x00\xff"
+    status_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + status_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1165,10 +1294,14 @@ async def test_bluetooth_client_get_status(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_get_device_identity(mock_establish):
     """Test get_device_identity method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1178,22 +1311,20 @@ async def test_bluetooth_client_get_device_identity(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     identity_data = {
-        "body": {
-            "results": [{
-                "pars": {
-                    "ser_no": "123456",
-                    "serv_code": "ABCDEF"
-                }
-            }]
-        }
+        "body": {"results": [{"pars": {"ser_no": "123456", "serv_code": "ABCDEF"}}]}
     }
     identity_json = json.dumps(identity_data)
-    identity_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + identity_json.encode("utf-8") + b"\x00\xff"
+    identity_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + identity_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1214,10 +1345,14 @@ async def test_bluetooth_client_get_device_identity(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_get_wifi_info(mock_establish):
     """Test get_wifi_info method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1227,29 +1362,36 @@ async def test_bluetooth_client_get_wifi_info(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     wifi_data = {
         "body": {
-            "results": [{
-                "pars": {
-                    "cloud_connect": {"val": True},
-                    "ssid": {"val": "MyWiFi"},
-                    "signal": {"val": -50},
-                    "ip": {"val": "192.168.1.100"},
-                    "b_mac": {"val": "AA:BB:CC:DD:EE:FF"},
-                    "w_mac": {"val": "11:22:33:44:55:66"},
-                    "default_gateway": {"val": "192.168.1.1"},
-                    "default_gateway_mac": {"val": "AA:BB:CC:DD:EE:00"},
-                    "subnet": {"val": "255.255.255.0"}
+            "results": [
+                {
+                    "pars": {
+                        "cloud_connect": {"val": True},
+                        "ssid": {"val": "MyWiFi"},
+                        "signal": {"val": -50},
+                        "ip": {"val": "192.168.1.100"},
+                        "b_mac": {"val": "AA:BB:CC:DD:EE:FF"},
+                        "w_mac": {"val": "11:22:33:44:55:66"},
+                        "default_gateway": {"val": "192.168.1.1"},
+                        "default_gateway_mac": {"val": "AA:BB:CC:DD:EE:00"},
+                        "subnet": {"val": "255.255.255.0"},
+                    }
                 }
-            }]
+            ]
         }
     }
     wifi_json = json.dumps(wifi_data)
-    wifi_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + wifi_json.encode("utf-8") + b"\x00\xff"
+    wifi_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + wifi_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1272,10 +1414,14 @@ async def test_bluetooth_client_get_wifi_info(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_set_temperature_success(mock_establish):
     """Test set_temperature method with valid temperature."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1285,13 +1431,18 @@ async def test_bluetooth_client_set_temperature_success(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 2}
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1310,10 +1461,14 @@ async def test_bluetooth_client_set_temperature_success(mock_establish):
 @pytest.mark.asyncio
 async def test_bluetooth_client_set_temperature_invalid_low():
     """Test set_temperature with temperature too low."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     with pytest.raises(ValueError, match="Temperature must be between 4 and 10"):
         await client.set_temperature(cooling_celsius=3)
@@ -1322,10 +1477,14 @@ async def test_bluetooth_client_set_temperature_invalid_low():
 @pytest.mark.asyncio
 async def test_bluetooth_client_set_temperature_invalid_high():
     """Test set_temperature with temperature too high."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     with pytest.raises(ValueError, match="Temperature must be between 4 and 10"):
         await client.set_temperature(cooling_celsius=11)
@@ -1335,10 +1494,14 @@ async def test_bluetooth_client_set_temperature_invalid_high():
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_set_water_hardness_success(mock_establish):
     """Test set_water_hardness method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1348,13 +1511,18 @@ async def test_bluetooth_client_set_water_hardness_success(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 2}
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1374,10 +1542,14 @@ async def test_bluetooth_client_set_water_hardness_success(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_change_pin_success(mock_establish):
     """Test change_pin method with successful PIN change."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1387,13 +1559,18 @@ async def test_bluetooth_client_change_pin_success(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 2}
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1414,10 +1591,14 @@ async def test_bluetooth_client_change_pin_success(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_change_pin_failure(mock_establish):
     """Test change_pin method when PIN change fails."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1427,13 +1608,18 @@ async def test_bluetooth_client_change_pin_failure(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 1}  # Not type 2 = failure
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1454,10 +1640,14 @@ async def test_bluetooth_client_change_pin_failure(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_dispense_water_success(mock_establish):
     """Test dispense_water method with valid parameters."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1467,13 +1657,18 @@ async def test_bluetooth_client_dispense_water_success(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 2}
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1492,10 +1687,14 @@ async def test_bluetooth_client_dispense_water_success(mock_establish):
 @pytest.mark.asyncio
 async def test_bluetooth_client_dispense_water_invalid_amount_low():
     """Test dispense_water with amount too low."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     with pytest.raises(ValueError, match="Amount must be between 100ml and 1500ml"):
         await client.dispense_water(amount_ml=50, co2_intensity=1)
@@ -1504,10 +1703,14 @@ async def test_bluetooth_client_dispense_water_invalid_amount_low():
 @pytest.mark.asyncio
 async def test_bluetooth_client_dispense_water_invalid_amount_high():
     """Test dispense_water with amount too high."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     with pytest.raises(ValueError, match="Amount must be between 100ml and 1500ml"):
         await client.dispense_water(amount_ml=2000, co2_intensity=1)
@@ -1516,10 +1719,14 @@ async def test_bluetooth_client_dispense_water_invalid_amount_high():
 @pytest.mark.asyncio
 async def test_bluetooth_client_dispense_water_invalid_amount_not_multiple():
     """Test dispense_water with amount not a multiple of 100."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     with pytest.raises(ValueError, match="Amount must be a multiple of 100ml"):
         await client.dispense_water(amount_ml=150, co2_intensity=1)
@@ -1528,10 +1735,14 @@ async def test_bluetooth_client_dispense_water_invalid_amount_not_multiple():
 @pytest.mark.asyncio
 async def test_bluetooth_client_dispense_water_invalid_intensity():
     """Test dispense_water with invalid CO2 intensity."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     with pytest.raises(ValueError, match="CO2 intensity must be"):
         await client.dispense_water(amount_ml=500, co2_intensity=5)
@@ -1541,10 +1752,14 @@ async def test_bluetooth_client_dispense_water_invalid_intensity():
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_set_calibration_still(mock_establish):
     """Test set_calibration_still method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1554,13 +1769,18 @@ async def test_bluetooth_client_set_calibration_still(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 2}
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1580,10 +1800,14 @@ async def test_bluetooth_client_set_calibration_still(mock_establish):
 @patch("custom_components.blanco_unit.client.establish_connection")
 async def test_bluetooth_client_set_calibration_soda(mock_establish):
     """Test set_calibration_soda method."""
-    device = BLEDevice(address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50)
+    device = BLEDevice(
+        address="AA:BB:CC:DD:EE:FF", name="Test Device", details={}, rssi=-50
+    )
     callback = MagicMock()
 
-    client = BlancoUnitBluetoothClient(pin="12345", device=device, connection_callback=callback)
+    client = BlancoUnitBluetoothClient(
+        pin="12345", device=device, connection_callback=callback
+    )
 
     # Mock establish_connection
     mock_ble_client = AsyncMock()
@@ -1593,13 +1817,18 @@ async def test_bluetooth_client_set_calibration_soda(mock_establish):
     # Mock responses
     pairing_data = {"body": {"meta": {"dev_id": "device123"}}}
     pairing_json = json.dumps(pairing_data)
-    pairing_packet = bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    pairing_packet = (
+        bytes([0xFF, 0x00, 1, 10, 0x00]) + pairing_json.encode("utf-8") + b"\x00\xff"
+    )
 
     response_data = {"type": 2}
     response_json = json.dumps(response_data)
-    response_packet = bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    response_packet = (
+        bytes([0xFF, 0x00, 1, 11, 0x00]) + response_json.encode("utf-8") + b"\x00\xff"
+    )
 
     read_count = 0
+
     async def mock_read(*args, **kwargs):
         nonlocal read_count
         read_count += 1
@@ -1631,10 +1860,9 @@ def test_extract_device_id_exception_handling():
     class BrokenDict:
         def __contains__(self, key):
             return True  # Pretend the key exists
+
         def __getitem__(self, key):
             raise KeyError("Broken!")  # But raise KeyError when accessing
 
     response2 = {"body": {"meta": BrokenDict()}}
     assert _extract_device_id(response2) is None
-
-

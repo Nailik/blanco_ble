@@ -136,6 +136,7 @@ def mock_bleak_client_fixture():
 def mock_coord_for_snapshots(mock_blanco_unit_data):
     """Mock the coordinator for snapshot tests."""
     from unittest.mock import AsyncMock, patch
+
     from custom_components.blanco_unit.coordinator import BlancoUnitCoordinator
 
     with patch(
