@@ -1,9 +1,15 @@
 """Tests for the Blanco Unit sensor entities."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    snapshot_platform,
+)
+from syrupy.assertion import SnapshotAssertion
 
+from custom_components.blanco_unit.const import CONF_MAC, CONF_NAME, CONF_PIN, DOMAIN
 from custom_components.blanco_unit.data import (
     BlancoUnitData,
     BlancoUnitIdentity,
@@ -37,7 +43,11 @@ from custom_components.blanco_unit.sensor import (
     WiFiSSIDSensor,
     async_setup_entry,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+
+from .conftest import setup_integration
 
 
 @pytest.fixture
@@ -98,6 +108,36 @@ def mock_config_entry():
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
     return entry
+
+
+async def test_all_entities(
+    hass: HomeAssistant,
+    snapshot: SnapshotAssertion,
+    entity_registry: er.EntityRegistry,
+    mock_blanco_unit_data,
+    mock_bluetooth_device,
+) -> None:
+    """Test all entities."""
+    mock_config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_MAC: "AA:BB:CC:DD:EE:FF",
+            CONF_NAME: "Test Blanco Unit",
+            CONF_PIN: 12345,
+        },
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+
+    with (
+        patch("custom_components.blanco_unit.PLATFORMS", [Platform.SENSOR]),
+        patch(
+            "custom_components.blanco_unit.bluetooth.async_ble_device_from_address",
+            return_value=mock_bluetooth_device,
+        ),
+    ):
+        await setup_integration(hass, mock_config_entry)
+
+        await snapshot_platform(hass, entity_registry, snapshot, mock_config_entry.entry_id)
 
 
 async def test_async_setup_entry(

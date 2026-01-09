@@ -108,3 +108,52 @@ def mock_coordinator_fixture(mock_blanco_unit_data):
     coordinator.address = "AA:BB:CC:DD:EE:FF"
     coordinator.mac_address = "AA:BB:CC:DD:EE:FF"
     return coordinator
+
+
+@pytest.fixture(name="mock_bluetooth_device")
+def mock_bluetooth_device_fixture():
+    """Return a mock Bluetooth device."""
+    from unittest.mock import MagicMock
+
+    device = MagicMock()
+    device.address = "AA:BB:CC:DD:EE:FF"
+    device.name = "Blanco Unit"
+    return device
+
+
+@pytest.fixture(name="mock_bleak_client")
+def mock_bleak_client_fixture():
+    """Return a mock Bleak client."""
+    from unittest.mock import AsyncMock
+
+    client = AsyncMock()
+    client.is_connected = True
+    client.disconnect = AsyncMock()
+    return client
+
+
+@pytest.fixture(autouse=True)
+def mock_coord_for_snapshots(mock_blanco_unit_data):
+    """Mock the coordinator for snapshot tests."""
+    from unittest.mock import AsyncMock, patch
+    from custom_components.blanco_unit.coordinator import BlancoUnitCoordinator
+
+    with patch(
+        "custom_components.blanco_unit.BlancoUnitCoordinator"
+    ) as mock_coord_class:
+        instance = MagicMock(spec=BlancoUnitCoordinator)
+        instance.address = "AA:BB:CC:DD:EE:FF"
+        instance.mac_address = "AA:BB:CC:DD:EE:FF"
+        instance.name = "Test Blanco Unit"
+        instance.data = mock_blanco_unit_data
+        instance.async_config_entry_first_refresh = AsyncMock()
+        instance.unload = AsyncMock()
+        instance.disconnect = AsyncMock()
+        instance.refresh_data = AsyncMock()
+        instance.set_temperature = AsyncMock()
+        instance.set_water_hardness = AsyncMock()
+        instance.set_calibration_still = AsyncMock()
+        instance.set_calibration_soda = AsyncMock()
+        instance.last_update_success = True
+        mock_coord_class.return_value = instance
+        yield instance

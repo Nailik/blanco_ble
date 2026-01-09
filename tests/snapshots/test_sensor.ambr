@@ -1,0 +1,1104 @@
+# serializer version: 1
+# name: test_all_entities[sensor.test_blanco_unit_bluetooth_mac_address-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_bluetooth_mac_address',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:bluetooth',
+    'original_name': 'Bluetooth MAC Address',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'ble_mac',
+    'unique_id': 'ble_mac',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_bluetooth_mac_address-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Bluetooth MAC Address',
+      'icon': 'mdi:bluetooth',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_bluetooth_mac_address',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'AA:BB:CC:DD:EE:FF',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_cleaning_mode_state-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_cleaning_mode_state',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:spray',
+    'original_name': 'Cleaning Mode State',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'clean_mode_state',
+    'unique_id': 'clean_mode_state',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_cleaning_mode_state-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Cleaning Mode State',
+      'icon': 'mdi:spray',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_cleaning_mode_state',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_co2_cylinder_remaining-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': None,
+    'entity_id': 'sensor.test_blanco_unit_co2_cylinder_remaining',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': <SensorDeviceClass.BATTERY: 'battery'>,
+    'original_icon': None,
+    'original_name': 'CO2 Cylinder Remaining',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'co2_remaining',
+    'unique_id': 'co2_remaining',
+    'unit_of_measurement': '%',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_co2_cylinder_remaining-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'device_class': 'battery',
+      'friendly_name': 'Test Blanco Unit CO2 Cylinder Remaining',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+      'unit_of_measurement': '%',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_co2_cylinder_remaining',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '100',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_communication_controller_firmware-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_communication_controller_firmware',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:chip',
+    'original_name': 'Communication Controller Firmware',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'firmware_comm',
+    'unique_id': 'firmware_comm',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_communication_controller_firmware-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Communication Controller Firmware',
+      'icon': 'mdi:chip',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_communication_controller_firmware',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '1.0.0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_device_name-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_device_name',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:label',
+    'original_name': 'Device Name',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'device_name',
+    'unique_id': 'device_name',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_device_name-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Device Name',
+      'icon': 'mdi:label',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_device_name',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'Test Device',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_electronic_controller_firmware-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_electronic_controller_firmware',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:chip',
+    'original_name': 'Electronic Controller Firmware',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'firmware_elec',
+    'unique_id': 'firmware_elec',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_electronic_controller_firmware-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Electronic Controller Firmware',
+      'icon': 'mdi:chip',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_electronic_controller_firmware',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '1.0.0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_error_code-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_error_code',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:alert-circle',
+    'original_name': 'Error Code',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'error_bits',
+    'unique_id': 'error_bits',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_error_code-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Error Code',
+      'icon': 'mdi:alert-circle',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_error_code',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_filter_capacity_remaining-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': None,
+    'entity_id': 'sensor.test_blanco_unit_filter_capacity_remaining',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': <SensorDeviceClass.BATTERY: 'battery'>,
+    'original_icon': None,
+    'original_name': 'Filter Capacity Remaining',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'filter_remaining',
+    'unique_id': 'filter_remaining',
+    'unit_of_measurement': '%',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_filter_capacity_remaining-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'device_class': 'battery',
+      'friendly_name': 'Test Blanco Unit Filter Capacity Remaining',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+      'unit_of_measurement': '%',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_filter_capacity_remaining',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '100',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_filter_lifetime-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_filter_lifetime',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
+    }),
+    'original_device_class': <SensorDeviceClass.DURATION: 'duration'>,
+    'original_icon': 'mdi:calendar-clock',
+    'original_name': 'Filter Lifetime',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'filter_lifetime',
+    'unique_id': 'filter_lifetime',
+    'unit_of_measurement': <UnitOfTime.DAYS: 'd'>,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_filter_lifetime-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'device_class': 'duration',
+      'friendly_name': 'Test Blanco Unit Filter Lifetime',
+      'icon': 'mdi:calendar-clock',
+      'unit_of_measurement': <UnitOfTime.DAYS: 'd'>,
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_filter_lifetime',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '365',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_gateway_mac_address-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_gateway_mac_address',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:router-network',
+    'original_name': 'Gateway MAC Address',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'gateway_mac',
+    'unique_id': 'gateway_mac',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_gateway_mac_address-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Gateway MAC Address',
+      'icon': 'mdi:router-network',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_gateway_mac_address',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'AA:BB:CC:DD:EE:00',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_ip_address-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_ip_address',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:ip-network',
+    'original_name': 'IP Address',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'ip_address',
+    'unique_id': 'ip_address',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_ip_address-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit IP Address',
+      'icon': 'mdi:ip-network',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_ip_address',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '192.168.1.100',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_main_controller_firmware-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_main_controller_firmware',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:chip',
+    'original_name': 'Main Controller Firmware',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'firmware_main',
+    'unique_id': 'firmware_main',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_main_controller_firmware-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Main Controller Firmware',
+      'icon': 'mdi:chip',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_main_controller_firmware',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '1.0.0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_network_gateway-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_network_gateway',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:router-network',
+    'original_name': 'Network Gateway',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'gateway',
+    'unique_id': 'gateway',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_network_gateway-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Network Gateway',
+      'icon': 'mdi:router-network',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_network_gateway',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '192.168.1.1',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_post_flush_quantity-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_post_flush_quantity',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
+    }),
+    'original_device_class': <SensorDeviceClass.VOLUME: 'volume'>,
+    'original_icon': 'mdi:water',
+    'original_name': 'Post-Flush Quantity',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'post_flush_quantity',
+    'unique_id': 'post_flush_quantity',
+    'unit_of_measurement': 'mL',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_post_flush_quantity-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'device_class': 'volume',
+      'friendly_name': 'Test Blanco Unit Post-Flush Quantity',
+      'icon': 'mdi:water',
+      'unit_of_measurement': 'mL',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_post_flush_quantity',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '100',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_reset_count-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_reset_count',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:counter',
+    'original_name': 'Reset Count',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'reset_count',
+    'unique_id': 'reset_count',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_reset_count-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Reset Count',
+      'icon': 'mdi:counter',
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_reset_count',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_serial_number-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_serial_number',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:barcode',
+    'original_name': 'Serial Number',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'serial_number',
+    'unique_id': 'serial_number',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_serial_number-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Serial Number',
+      'icon': 'mdi:barcode',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_serial_number',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '123456',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_service_code-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_service_code',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:barcode-scan',
+    'original_name': 'Service Code',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'service_code',
+    'unique_id': 'service_code',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_service_code-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Service Code',
+      'icon': 'mdi:barcode-scan',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_service_code',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'ABCDEF',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_subnet_mask-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_subnet_mask',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:ip-network-outline',
+    'original_name': 'Subnet Mask',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'subnet',
+    'unique_id': 'subnet',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_subnet_mask-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Subnet Mask',
+      'icon': 'mdi:ip-network-outline',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_subnet_mask',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '255.255.255.0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_tap_state-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_tap_state',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:water-pump',
+    'original_name': 'Tap State',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'tap_state',
+    'unique_id': 'tap_state',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_tap_state-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit Tap State',
+      'icon': 'mdi:water-pump',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_tap_state',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '0',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_wifi_mac_address-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_wifi_mac_address',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:network',
+    'original_name': 'WiFi MAC Address',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'wifi_mac',
+    'unique_id': 'wifi_mac',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_wifi_mac_address-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit WiFi MAC Address',
+      'icon': 'mdi:network',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_wifi_mac_address',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '11:22:33:44:55:66',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_wifi_network_name-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_wifi_network_name',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': 'mdi:wifi',
+    'original_name': 'WiFi Network Name',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'wifi_ssid',
+    'unique_id': 'wifi_ssid',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_wifi_network_name-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'friendly_name': 'Test Blanco Unit WiFi Network Name',
+      'icon': 'mdi:wifi',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_wifi_network_name',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'TestSSID',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_wifi_signal_strength-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': set({
+    }),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.test_blanco_unit_wifi_signal_strength',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'options': dict({
+    }),
+    'original_device_class': <SensorDeviceClass.SIGNAL_STRENGTH: 'signal_strength'>,
+    'original_icon': None,
+    'original_name': 'WiFi Signal Strength',
+    'platform': 'blanco_unit',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'wifi_signal',
+    'unique_id': 'wifi_signal',
+    'unit_of_measurement': 'dBm',
+  })
+# ---
+# name: test_all_entities[sensor.test_blanco_unit_wifi_signal_strength-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'device_class': 'signal_strength',
+      'friendly_name': 'Test Blanco Unit WiFi Signal Strength',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+      'unit_of_measurement': 'dBm',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.test_blanco_unit_wifi_signal_strength',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '-50',
+  })
+# ---

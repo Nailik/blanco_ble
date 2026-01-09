@@ -12,7 +12,8 @@
       "Bash(wsl bash:*)",
       "Bash(pre-commit run:*)",
       "Bash(wsl pytest:*)",
-      "Bash(wsl python3 -m pytest:*)"
+      "Bash(wsl python3 -m pytest:*)",
+      "Bash(grep:*)"
     ]
   }
 }
