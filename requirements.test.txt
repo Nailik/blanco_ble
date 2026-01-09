@@ -6,3 +6,4 @@ pyserial
 bleak
 pyudev
 aiousbwatcher
+pycares==4.11.0
